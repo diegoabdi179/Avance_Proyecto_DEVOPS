@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Plantilla de CloudFormation para el proyecto DevOps'
+
+Parameters:
+  TipoInstancia:
+    Description: 'Tipo de instancia EC2 (Obligatorio usar t2.micro o t3.micro para Learner Lab)'
+    Type: String
+    Default: t2.micro
+    AllowedValues: 
+      - t2.micro
+      - t3.micro
+      - t3.small
+
+Resources:
+
+  # 1. Bucket de S3
+ 
+  MiBucketDevOps:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      # AWS generará un nombre único automáticamente para evitar conflictos
+      Tags:
+        - Key: Environment
+          Value: DevOps-Lab
+        - Key: Project
+          Value: ProyectoUniversidad
+
+  # 2. Instancia EC2
+
+  MiServidorWeb:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      # Utilizamos un parámetro de Systems Manager para obtener siempre 
+      # la última imagen de Amazon Linux 2023, sin importar la región (us-east-1 o us-west-2)
+      ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
+      InstanceType: !Ref TipoInstancia
+      Tags:
+        - Key: Name
+          Value: Servidor-DevOps-EC2
+
+Outputs:
+  NombreDelBucket:
+    Description: 'El nombre del bucket S3 creado'
+    Value: !Ref MiBucketDevOps
+  IDInstancia:
+    Description: 'El ID de la instancia EC2 creada'
+    Value: !Ref MiServidorWeb
