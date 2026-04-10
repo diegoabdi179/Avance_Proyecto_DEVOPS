@@ -2,10 +2,10 @@ import boto3
 import datetime
 
 # Inicializamos los clientes de AWS
-ec2_client = boto3.client('ec2')
-cw_client = boto3.client('cloudwatch')
-s3_client = boto3.client('s3')
-asg_client = boto3.client('autoscaling')
+ec2_client = boto3.client('ec2', region_name='us-east-1')
+cw_client = boto3.client('cloudwatch', region_name='us-east-1')
+s3_client = boto3.client('s3', region_name='us-east-1')
+asg_client = boto3.client('autoscaling', region_name='us-east-1')
 
 # 1. Listado de instancias EC2
 
@@ -43,7 +43,7 @@ def reporte_uso_ec2(instancias):
         print("No hay instancias corriendo para sacar métricas.")
         return
 
-    # Definimos el rango de tiempo (modificar de ser necesario)
+    # Definimos el rango de tiempo 
     end_time = datetime.datetime.now(datetime.timezone.utc)
     start_time = end_time - datetime.timedelta(hours=1)
 
@@ -121,5 +121,5 @@ if __name__ == '__main__':
     listar_s3()
     
     # 4. Configurar Auto Scaling (Descomenta y pon el nombre real de tu ASG para usarlo)
-    # nombre_de_tu_asg = "MiGrupoAutoScaling"
-    # ajustar_auto_scaling(nombre_de_tu_asg, capacidad_deseada=2, max_size=4)
+    nombre_de_tu_asg = "MiGrupoAutoScaling"
+    ajustar_auto_scaling(nombre_de_tu_asg, capacidad_deseada=2, max_size=4)
