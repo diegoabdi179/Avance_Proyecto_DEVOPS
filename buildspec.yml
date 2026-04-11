@@ -1,0 +1,21 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      - pip install flask pytest
+  pre_build:
+    commands:
+      - echo "Validando sintaxis..."
+      - python -m py_compile app.py
+  build:
+    commands:
+      - echo "Construyendo imagen Docker..."
+      - docker build -t mi-app-web .
+  post_build:
+    commands:
+      - echo "Construccion exitosa el $(date)"
+artifacts:
+  files:
+    - '**/*'

@@ -24,3 +24,6 @@ Al usar una cuenta estándar en AWS, Cloudformation hereda los permisos del admi
 -role/LabRole: Es el rol oficial y pre-aprobado del Learner Lab. Contiene exactamente los permisos necesarios para aprovisionar las instancias EC2 y los buckets de S3 requeridos para el proyecto.
 
 Omitir el parámetro `--role-arn` o intentar definir políticas de IAM desde cero dentro de la plantilla YAML resultará invariablemente en un error `AccessDenied` debido a las restricciones de la organización de AWS Academy/Educate.
+
+Para comenzar el monitoreo y listado de instancias y de buckets, ejecute el siguiente comando:
+ python3 auto_tasklist.py
