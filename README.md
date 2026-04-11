@@ -16,12 +16,12 @@ Este es el repositorio que se utilizará para el avance de Proyecto de DevOps. C
 ---
 
 ## Instrucciones de Ejecución
-
-### 1. Configuración del Entorno (Linux)
-Antes de ejecutar cualquier despliegue, es necesario preparar el servidor instalando las herramientas esenciales. En la terminal de la instancia EC2, una vez obtenidas las credenciales, ejecute:
-```bash
 chmod +x setup_env.sh
 ./setup_env.sh
+1. Configuración del Entorno (Linux)
+Antes de ejecutar cualquier despliegue, es necesario preparar el servidor instalando las herramientas esenciales. En la terminal de la instancia EC2, una vez obtenidas las credenciales, ejecute:
+```bash
+
 2. Despliegue de Infraestructura (CloudFormation)
 El siguiente bloque de comandos será el que se tenga que ejecutar en la CLI de AWS para desplegar los servidores y buckets:
 
@@ -54,6 +54,7 @@ Para comenzar el monitoreo de uso de CPU, listado de instancias y auditoría de 
 
 Bash
 python3 auto_tasklist.py
+
 4. Contenerización de la Aplicación (Docker)
 Para levantar la aplicación web aislada en su contenedor con la red y volúmenes configurados, ejecute:
 
