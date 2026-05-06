@@ -1,21 +1,81 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Plantilla unificada de Infraestructura y Datos para AWS Learner Lab.
 
+Parameters:
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64'
+    Description: Obtiene dinamicamente la ultima AMI de Amazon Linux 2023.
+
 Resources:
   # ==========================================
-  # RECURSOS DE TU COMPAÑERO (Infraestructura y Red)
+  # RECURSOS DE INFRAESTRUCTURA (VPC y EC2)
   # ==========================================
   VPCPrincipal:
     Type: 'AWS::EC2::VPC'
     Properties:
       CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  SubredPublica:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPCPrincipal
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+
+  VPCGatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPCPrincipal
+      InternetGatewayId: !Ref InternetGateway
+
+  TablaEnrutamiento:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPCPrincipal
+
+  RutaPublica:
+    Type: 'AWS::EC2::Route'
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref TablaEnrutamiento
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  AsociacionSubred:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref SubredPublica
+      RouteTableId: !Ref TablaEnrutamiento
+
+  GrupoSeguridadWeb:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Permitir trafico HTTP (Puerto 80)
+      VpcId: !Ref VPCPrincipal
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
 
   InstanciaServidor:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: t2.micro
-      ImageId: resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64
+      ImageId: !Ref LatestAmiId
       IamInstanceProfile: LabInstanceProfile
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: true
+          SubnetId: !Ref SubredPublica
+          GroupSet: 
+            - !Ref GrupoSeguridadWeb
 
   # ==========================================
   # TUS RECURSOS (Datos y Serverless)
@@ -23,9 +83,20 @@ Resources:
   BucketDatosEquipo:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub 'bucket-proyecto-final'
+      # Nombre unico garantizado con AccountId y Region
+      BucketName: !Sub 'bucket-datos-equipo-${AWS::AccountId}-${AWS::Region}'
       VersioningConfiguration:
         Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: ReglaEliminacionAutomatica
+            Status: Enabled
+            ExpirationInDays: 90
+            NoncurrentVersionExpirationInDays: 30
 
   TablaUsuariosDynamoDB:
     Type: 'AWS::DynamoDB::Table'
@@ -44,11 +115,19 @@ Resources:
     Properties:
       FunctionName: RandomMessageAPI
       Runtime: nodejs20.x
-      # Uso estricto del LabRole para evitar errores de permisos
+      Handler: index.handler
       Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/LabRole'
-      ReservedConcurrentExecutions: 10 # Cumplimiento de límite de concurrencia
+      ReservedConcurrentExecutions: 10
       Code:
         ZipFile: |
           export const handler = async (event) => {
-              return { statusCode: 200, body: JSON.stringify({ mensaje: "Operación exitosa" }) };
+              return { statusCode: 200, body: JSON.stringify({ mensaje: "Operacion exitosa" }) };
           };
+
+Outputs:
+  NombreBucketGenerado:
+    Description: Nombre exacto del bucket S3 generado
+    Value: !Ref BucketDatosEquipo
+  IPPublicaInstancia:
+    Description: IP de la EC2 desplegada
+    Value: !GetAtt InstanciaServidor.PublicIp
