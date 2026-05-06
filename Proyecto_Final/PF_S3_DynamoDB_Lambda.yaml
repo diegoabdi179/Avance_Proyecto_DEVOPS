@@ -23,7 +23,7 @@ Resources:
   BucketDatosEquipo:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub 'bucket-datos-equipo-${AWS::AccountId}'
+      BucketName: !Sub 'bucket-proyecto-final'
       VersioningConfiguration:
         Status: Enabled
 
