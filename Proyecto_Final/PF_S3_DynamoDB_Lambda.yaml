@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Plantilla unificada de Infraestructura y Datos para AWS Learner Lab.
+
+Resources:
+  # ==========================================
+  # RECURSOS DE TU COMPAÑERO (Infraestructura y Red)
+  # ==========================================
+  VPCPrincipal:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 10.0.0.0/16
+
+  InstanciaServidor:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      ImageId: resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64
+      IamInstanceProfile: LabInstanceProfile
+
+  # ==========================================
+  # TUS RECURSOS (Datos y Serverless)
+  # ==========================================
+  BucketDatosEquipo:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub 'bucket-datos-equipo-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+
+  TablaUsuariosDynamoDB:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: Usuarios
+      AttributeDefinitions:
+        - AttributeName: id_usuario
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id_usuario
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  FuncionLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: RandomMessageAPI
+      Runtime: nodejs20.x
+      # Uso estricto del LabRole para evitar errores de permisos
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/LabRole'
+      ReservedConcurrentExecutions: 10 # Cumplimiento de límite de concurrencia
+      Code:
+        ZipFile: |
+          export const handler = async (event) => {
+              return { statusCode: 200, body: JSON.stringify({ mensaje: "Operación exitosa" }) };
+          };
