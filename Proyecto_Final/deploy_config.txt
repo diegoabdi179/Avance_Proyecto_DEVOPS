@@ -1,0 +1,3 @@
+=== Archivo de despliegue DevOps ===
+Proyecto: Soluciones Tecnologicas del Futuro
+Version: 1.0.0
